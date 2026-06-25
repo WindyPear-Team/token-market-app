@@ -1,10 +1,8 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 )
 
@@ -41,9 +39,6 @@ func (client connectorClient) executeTask(task connectorTask) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if !client.confirm(task) {
-		return "", errors.New("denied by local user")
-	}
 	switch task.Action {
 	case "list_files":
 		return listFiles(workspace, stringArg(task.Payload, "path"), intArg(task.Payload, "max_entries", 100))
@@ -56,28 +51,4 @@ func (client connectorClient) executeTask(task connectorTask) (string, error) {
 	default:
 		return "", fmt.Errorf("unsupported action %q", task.Action)
 	}
-}
-
-func (client connectorClient) confirm(task connectorTask) bool {
-	if client.config.AutoApprove || !taskRequiresApproval(task.Action) {
-		return true
-	}
-	fmt.Printf("Workspace: %s\n", task.WorkspacePath)
-	if path := stringArg(task.Payload, "path"); path != "" {
-		fmt.Printf("Path: %s\n", path)
-	}
-	switch task.Action {
-	case "write_file":
-		fmt.Printf("Write bytes: %d\n", len(stringArg(task.Payload, "content")))
-	case "replace_text":
-		fmt.Printf("Replace bytes: old=%d new=%d\n", len(stringArg(task.Payload, "old_text")), len(stringArg(task.Payload, "new_text")))
-	}
-	fmt.Print("Approve this connector task? Type yes to allow: ")
-	answer, _ := client.stdin.ReadString('\n')
-	answer = strings.TrimSpace(strings.ToLower(answer))
-	return answer == "yes" || answer == "y"
-}
-
-func taskRequiresApproval(action string) bool {
-	return action == "write_file" || action == "replace_text"
 }

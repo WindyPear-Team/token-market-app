@@ -2,9 +2,9 @@
 
 Local connector for WindyPear advanced chat assistant mode.
 
-The connector registers a local device with the backend, polls for tool tasks,
-asks for local approval before file edits, and sends task results back to the
-backend. The workspace directory is selected in the web session settings.
+The connector registers a local device with the backend, polls for approved
+tool tasks, and sends task results back to the backend. The workspace directory
+is selected in the web session settings.
 
 ## Run
 
@@ -25,7 +25,8 @@ Read-only actions run directly:
 - `list_files`
 - `read_file`
 
-Editing actions require local approval in the terminal unless `-yes` is passed:
+Editing actions require approval in the web frontend before the connector can
+receive the task:
 
 - `write_file`
 - `replace_text`
