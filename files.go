@@ -95,7 +95,7 @@ func writeFile(workspace string, relPath string, content string, overwrite bool,
 	return fmt.Sprintf("Wrote %d bytes to %s", len(content), relPath), nil
 }
 
-func replaceText(workspace string, relPath string, oldText string, newText string, replaceAll bool) (string, error) {
+func replaceText(workspace string, relPath string, oldText string, newText string) (string, error) {
 	if relPath == "" {
 		return "", errors.New("path is required")
 	}
@@ -115,17 +115,12 @@ func replaceText(workspace string, relPath string, oldText string, newText strin
 	if count == 0 {
 		return "", errors.New("old_text was not found")
 	}
-	limit := 1
-	if replaceAll {
-		limit = -1
+	if count > 1 {
+		return "", fmt.Errorf("old_text matched %d occurrences; refine old_text so it matches exactly one location", count)
 	}
-	next := strings.Replace(current, oldText, newText, limit)
+	next := strings.Replace(current, oldText, newText, 1)
 	if err := os.WriteFile(target, []byte(next), 0644); err != nil {
 		return "", err
 	}
-	replaced := 1
-	if replaceAll {
-		replaced = count
-	}
-	return fmt.Sprintf("Replaced %d occurrence(s) in %s", replaced, relPath), nil
+	return fmt.Sprintf("Replaced 1 occurrence in %s", relPath), nil
 }

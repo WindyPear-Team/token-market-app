@@ -26,10 +26,15 @@ Read-only actions run directly:
 - `read_file`
 
 Editing actions require approval in the web frontend before the connector can
-receive the task:
+receive the task, unless automatic approval is enabled for the chat session:
 
 - `write_file`
 - `replace_text`
+
+Command execution always requires approval unless the full command starts with
+one of the prefixes allowed in the chat session settings:
+
+- `run_command`
 
 ## Build
 

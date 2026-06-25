@@ -47,7 +47,9 @@ func (client connectorClient) executeTask(task connectorTask) (string, error) {
 	case "write_file":
 		return writeFile(workspace, stringArg(task.Payload, "path"), stringArg(task.Payload, "content"), boolArg(task.Payload, "overwrite"), boolArg(task.Payload, "create_dirs"))
 	case "replace_text":
-		return replaceText(workspace, stringArg(task.Payload, "path"), stringArg(task.Payload, "old_text"), stringArg(task.Payload, "new_text"), boolArg(task.Payload, "all"))
+		return replaceText(workspace, stringArg(task.Payload, "path"), stringArg(task.Payload, "old_text"), stringArg(task.Payload, "new_text"))
+	case "run_command":
+		return runCommand(workspace, stringArg(task.Payload, "command"), intArg(task.Payload, "timeout_sec", 30))
 	default:
 		return "", fmt.Errorf("unsupported action %q", task.Action)
 	}
