@@ -20,7 +20,7 @@ func (client connectorClient) pollLoop() {
 		}
 		fmt.Printf("\nTask %s: %s\n", envelope.Task.ID, envelope.Task.Action)
 		result, execErr := client.executeTask(*envelope.Task)
-		payload := map[string]interface{}{"success": execErr == nil, "result": result}
+		payload := result.payload(execErr == nil)
 		if execErr != nil {
 			payload["error"] = execErr.Error()
 			fmt.Printf("Task failed: %v\n", execErr)
@@ -34,23 +34,70 @@ func (client connectorClient) pollLoop() {
 	}
 }
 
-func (client connectorClient) executeTask(task connectorTask) (string, error) {
+type taskResult struct {
+	Result   string
+	Output   string
+	Stdout   string
+	Stderr   string
+	ExitCode *int
+}
+
+func textTaskResult(text string) taskResult {
+	return taskResult{Result: text}
+}
+
+func commandTaskResult(result commandResult) taskResult {
+	return taskResult{
+		Result:   result.Result,
+		Output:   result.Output,
+		Stdout:   result.Stdout,
+		Stderr:   result.Stderr,
+		ExitCode: result.ExitCode,
+	}
+}
+
+func (result taskResult) payload(success bool) map[string]interface{} {
+	payload := map[string]interface{}{
+		"success": success,
+		"result":  result.Result,
+	}
+	if result.Output != "" {
+		payload["output"] = result.Output
+	}
+	if result.Stdout != "" {
+		payload["stdout"] = result.Stdout
+	}
+	if result.Stderr != "" {
+		payload["stderr"] = result.Stderr
+	}
+	if result.ExitCode != nil {
+		payload["exit_code"] = *result.ExitCode
+	}
+	return payload
+}
+
+func (client connectorClient) executeTask(task connectorTask) (taskResult, error) {
 	workspace, err := client.workspaceRoot(task.WorkspacePath)
 	if err != nil {
-		return "", err
+		return taskResult{}, err
 	}
 	switch task.Action {
 	case "list_files":
-		return listFiles(workspace, stringArg(task.Payload, "path"), intArg(task.Payload, "max_entries", 100))
+		result, err := listFiles(workspace, stringArg(task.Payload, "path"), intArg(task.Payload, "max_entries", 100))
+		return textTaskResult(result), err
 	case "read_file":
-		return readFile(workspace, stringArg(task.Payload, "path"), intArg(task.Payload, "max_bytes", 120000))
+		result, err := readFile(workspace, stringArg(task.Payload, "path"), intArg(task.Payload, "max_bytes", 120000))
+		return textTaskResult(result), err
 	case "write_file":
-		return writeFile(workspace, stringArg(task.Payload, "path"), stringArg(task.Payload, "content"), boolArg(task.Payload, "overwrite"), boolArg(task.Payload, "create_dirs"))
+		result, err := writeFile(workspace, stringArg(task.Payload, "path"), stringArg(task.Payload, "content"), boolArg(task.Payload, "overwrite"), boolArg(task.Payload, "create_dirs"))
+		return textTaskResult(result), err
 	case "replace_text":
-		return replaceText(workspace, stringArg(task.Payload, "path"), stringArg(task.Payload, "old_text"), stringArg(task.Payload, "new_text"))
+		result, err := replaceText(workspace, stringArg(task.Payload, "path"), stringArg(task.Payload, "old_text"), stringArg(task.Payload, "new_text"))
+		return textTaskResult(result), err
 	case "run_command":
-		return runCommand(workspace, stringArg(task.Payload, "command"), intArg(task.Payload, "timeout_sec", 30))
+		result, err := runCommand(workspace, stringArg(task.Payload, "command"), intArg(task.Payload, "timeout_sec", 30))
+		return commandTaskResult(result), err
 	default:
-		return "", fmt.Errorf("unsupported action %q", task.Action)
+		return taskResult{}, fmt.Errorf("unsupported action %q", task.Action)
 	}
 }
