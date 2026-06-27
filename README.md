@@ -24,6 +24,7 @@ Read-only actions run directly:
 
 - `list_files`
 - `read_file`
+- `web_search`
 
 Editing actions require approval in the web frontend before the connector can
 receive the task, unless automatic approval is enabled for the chat session:

@@ -97,6 +97,15 @@ func (client connectorClient) executeTask(task connectorTask) (taskResult, error
 	case "run_command":
 		result, err := runCommand(workspace, stringArg(task.Payload, "command"), intArg(task.Payload, "timeout_sec", 30))
 		return commandTaskResult(result), err
+	case "web_search":
+		result, err := webSearch(
+			stringArg(task.Payload, "query"),
+			intArg(task.Payload, "max_results", 5),
+			stringArg(task.Payload, "language"),
+			stringArg(task.Payload, "region"),
+			stringArg(task.Payload, "time_range"),
+		)
+		return textTaskResult(result), err
 	default:
 		return taskResult{}, fmt.Errorf("unsupported action %q", task.Action)
 	}
