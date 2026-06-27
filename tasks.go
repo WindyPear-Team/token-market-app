@@ -106,6 +106,9 @@ func (client connectorClient) executeTask(task connectorTask) (taskResult, error
 			stringArg(task.Payload, "time_range"),
 		)
 		return textTaskResult(result), err
+	case "list_agent_skills":
+		result, err := listAgentSkills(workspace)
+		return textTaskResult(result), err
 	default:
 		return taskResult{}, fmt.Errorf("unsupported action %q", task.Action)
 	}
