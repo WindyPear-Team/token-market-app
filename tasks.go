@@ -101,6 +101,18 @@ func (client connectorClient) executeTask(task connectorTask) (taskResult, error
 	case "list_windows_drives":
 		result, err := listWindowsDrives()
 		return textTaskResult(result), err
+	case "list_agent_groups":
+		result, err := listAgentGroups()
+		return textTaskResult(result), err
+	case "read_agent_group":
+		result, err := readAgentGroup(stringArg(task.Payload, "id"))
+		return textTaskResult(result), err
+	case "write_agent_group":
+		result, err := writeAgentGroup(stringArg(task.Payload, "id"), stringArg(task.Payload, "content"))
+		return textTaskResult(result), err
+	case "delete_agent_group":
+		result, err := deleteAgentGroup(stringArg(task.Payload, "id"))
+		return textTaskResult(result), err
 	}
 	workspace := ""
 	if strings.TrimSpace(task.WorkspacePath) != "" {
